@@ -1,0 +1,218 @@
+#!/bin/sh
+
+# rorus
+
+# a command-line tool to simplify basic operations of a Ruby On Rails Unicorn Server
+# version 0.1
+
+# usage:
+#   rorus {action}
+#      action: [ start | status | stop ]
+
+
+# Get command line variables
+action="$1"
+
+
+# Set the initial directory so we can return to it later
+initial_dir=`pwd`
+
+
+# Set variables for the application
+app_dir="/home/user/dir"
+config_file="$app_dir/config/unicorn.rb"
+pid_file="$app_dir/shared/unicorn.pid"
+server_start_cmd="bundle exec unicorn -c $config_file -E production -D"
+
+
+
+app_dir_does_exist () {
+  [ -d $app_dir -o -L $app_dir ]
+}
+app_dir_does_not_exist () {
+  [ ! -d $app_dir -a ! -L $app_dir ]
+}
+current_pid () {
+  cat $pid_file
+}
+current_process () {
+  ps --no-headers -p `current_pid`
+}
+file_pid_does_exist () {
+  [ -f $pid_file ]
+}
+file_pid_does_not_exist () {
+  [ ! -f $pid_file ]
+}
+server_currently_not_running () {
+  server_currently_running
+  SERVER_CURRENTLY_RUNNING=$?
+  if [ $SERVER_CURRENTLY_RUNNING -eq 1 ]; then
+    return 0
+  else 
+    return 1
+  fi
+}
+server_currently_running () {
+  [ -n current_process ]
+}
+
+
+
+report_app_dir_does_exist () {
+  echo "Application directory exists: $app_dir"
+}
+report_app_dir_does_not_exist () {
+  echo "Application directory $app_dir does not exist"
+}
+report_attempting_stop () {
+  echo "Attempting to stop server on process `current_pid`"
+}
+report_current_processes () {
+  ps -p `current_pid` --ppid `current_pid` -f
+}
+report_pid_file_does_exist () {
+  echo "PID file exists: $pid_file"
+}
+report_pid_file_does_not_exist () {
+  echo "PID file not found: $pid_file"
+}
+report_process_not_found () {
+  echo "No active process found for PID `current_pid`"
+}
+report_server_appears_already_running () {
+  echo "Server for rails app appears to be already running, PID `current_pid`."
+}
+report_server_did_start () {
+  echo "Server for rails app started"
+  echo "Process ID `current_pid`"
+}
+report_server_did_not_start () {
+  echo "Server for rails app did not start"
+}
+
+
+
+start () {
+  start_conditions
+  START_CONDITIONS=$?
+  if [ $START_CONDITIONS -eq 0 ]; then
+    start_server
+  fi
+}
+start_conditions () {
+  if `app_dir_does_not_exist`; then
+    report_app_dir_does_not_exist
+    return 1
+  fi
+  if `file_pid_does_exist`; then
+    report_pid_file_does_exist
+    if `server_currently_running`; then
+      report_server_appears_already_running
+    fi
+    return 1
+  fi
+  return 0
+}
+start_server () {
+  start_server_exec
+  start_server_result
+}
+start_server_exec () {
+  cd "$app_dir"
+  $server_start_cmd
+  cd "$intital_dir"
+}
+start_server_result () {
+  if `file_pid_does_exist`; then
+    report_server_did_start
+  else
+    report_server_did_not_start
+  fi
+}
+
+
+status () {
+  status_app_dir
+  status_pid_file
+  status_process
+}
+status_app_dir () {
+  if `app_dir_does_exist`; then
+    report_app_dir_does_exist
+  else
+    report_app_dir_does_not_exist
+    exit
+  fi
+}
+status_pid_file () {
+  if `file_pid_does_exist`; then
+    report_pid_file_does_exist
+  else
+    report_pid_file_does_not_exist
+    exit
+  fi
+}
+status_process () {
+  if `server_currently_running`; then
+    report_current_processes
+  else
+    report_process_not_found
+    exit
+  fi
+}
+
+
+stop () {
+  stop_conditions
+  STOP_CONDITIONS=$?
+  if [ $STOP_CONDITIONS -eq 0 ]; then
+    report_attempting_stop
+    stop_server
+  fi
+}
+stop_conditions () {
+  if `app_dir_does_not_exist`; then
+    report_app_dir_does_not_exist
+    return 1
+  elif `file_pid_does_not_exist`; then
+    report_pid_file_does_not_exist
+    return 1
+  elif `server_currently_not_running`; then
+    report_process_not_found
+    return 1
+  else
+    return 0
+  fi
+}
+stop_server () {
+  kill `current_pid`
+}
+
+
+usage () {
+  echo "Action '$action' not recognized"
+  echo "Usage: rorus [ start | status | stop ]"
+}
+
+
+
+# Perform the action
+case "$action" in
+  start)
+    start
+    exit 0
+  ;;
+  status)
+    status
+    exit 0
+  ;;
+  stop)
+    stop
+    exit 0
+  ;;
+  *)
+    usage
+    exit 1
+  ;;
+esac
