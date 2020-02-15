@@ -3,7 +3,7 @@
 # rorus
 
 # a command-line tool to simplify basic operations of a Ruby On Rails Unicorn Server
-# version 0.1
+# version 0.2
 
 # usage:
 #   rorus {action}
@@ -12,10 +12,6 @@
 
 # Get command line variables
 action="$1"
-
-
-# Set the initial directory so we can return to it later
-initial_dir=`pwd`
 
 
 # Set variables for the application
@@ -120,8 +116,8 @@ start_server () {
 }
 start_server_exec () {
   cd "$app_dir"
+  echo `pwd`
   $server_start_cmd
-  cd "$intital_dir"
 }
 start_server_result () {
   if `file_pid_does_exist`; then
