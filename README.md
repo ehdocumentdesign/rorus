@@ -1,12 +1,10 @@
 # rorus
 
-version 0.1
+version 0.2
 
 **rorus** is a command-line tool to simplify basic start/stop operations of a Ruby On Rails Unicorn Server.
 
-**rorus** mimics the syntax of an init.d script.
-
-**rorus** does not require _sudo_.
+**rorus** does not require _sudo_ or _init.d_.
 
 -----
 
@@ -56,18 +54,18 @@ Add the file, change or confirm the application variables, and verify rorus is e
 
 2. Open the rorus file with a text editor, and change the following variable:
 
-    - *line 22: app_dir*  
+    - *line 18: app_dir*  
       the root directory for the rails application
 
 3. With the text editor still open, verify the following default values, and make changes if needed:
 
-    - *line 23: config_file*  
+    - *line 19: config_file*  
       the config file for the unicorn server
 
-    - *line 24: pid_file*  
+    - *line 20: pid_file*  
       the PID file created by the unicorn server
 
-    - *line 25: server_start_cmd*  
+    - *line 21: server_start_cmd*  
       the command used to start the unicorn server
   
 4. Save the rorus file.
@@ -92,6 +90,18 @@ To show the status of an application, including process IDs for a running server
 To stop a running application:  
 
   > `$ rorus stop`
+
+-----
+
+## Troubleshooting
+
+_This section is still being developed in response to in-use cases._
+
+  - **/home/user/bin/rorus: bundle: not found**
+    - Be sure that your $PATH environment variable includes the directory for ruby and ruby gems.
+    - If you are using _chruby_, be sure that a Ruby has been selected.
+
+
 
 -----
 
